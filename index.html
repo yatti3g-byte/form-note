@@ -13,7 +13,7 @@ html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif;display:flex;flex-direction:column;gap:6px;padding:6px;box-sizing:border-box}
 .panes{display:grid;grid-template-columns:1fr;gap:6px;flex:1;min-height:0}
 .panes.two{grid-template-columns:1fr 1fr}
-@media (orientation:portrait){.panes.two{grid-template-columns:1fr;grid-template-rows:1fr 1fr}}
+.panes.two.rows{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
 .pane{display:flex;flex-direction:column;gap:4px;min-height:0;min-width:0}
 .pane[hidden]{display:none}
 .bar{display:flex;align-items:center;gap:8px}
@@ -71,7 +71,7 @@ label.chk{display:inline-flex;align-items:center;gap:6px;min-height:44px}
 </div>
 
 <div id="snapbox" hidden>
-  <p>画像を長押しして保存するか、スクリーンショットで残せます。Claudeに送ると、フォームを一緒に確認できます。</p>
+  <p>画像を長押しして保存するか、スクリーンショットで残せます。SNSやコーチに送ってフォームを確認しましょう。</p>
   <img id="snapimg" alt="書き込み入りの静止画">
   <button class="btn" id="snapclose">閉じる</button>
 </div>
@@ -134,7 +134,7 @@ const panes=[0,1].map(i=>{
     el.querySelector('.empty').hidden=true;
     p.shapes=[];p.pend=null;setActive(i);
   };
-  p.v.onloadedmetadata=()=>{redraw(p);sync()};
+  p.v.onloadedmetadata=()=>{layout();redraw(p);sync()};
   p.v.ontimeupdate=()=>{if(active===i)sync()};
   p.v.onplay=p.v.onpause=()=>{if(active===i)$('#play').textContent=p.v.paused?'再生':'一時停止'};
   new ResizeObserver(()=>fit(p)).observe(p.c);
@@ -197,6 +197,7 @@ $('#cmp').onclick=()=>{
   $('#linkw').hidden=!compare;
   $('#cmp').classList.toggle('on',compare);
   $('#cmp').textContent=compare?'1画面に戻す':'並べて比較';
+  layout();
 };
 panes[1].el.hidden=true;
 document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{
@@ -228,6 +229,19 @@ $('#snap').onclick=()=>{
   $('#snapbox').hidden=false;
 };
 $('#snapclose').onclick=()=>$('#snapbox').hidden=true;
+/* 2画面時：動画の縦横比と画面の広さから、左右並びか上下並びかを自動で選ぶ */
+function layout(){
+  const box=$('#panes');if(!compare)return;
+  const W=box.clientWidth,H=box.clientHeight,g=6,bar=44;
+  if(!W||!H)return;
+  const ar=p=>p.v.videoWidth&&p.v.videoHeight?p.v.videoWidth/p.v.videoHeight:16/9;
+  const area=(w,h,a)=>{const dw=Math.max(0,Math.min(w,h*a));return dw*dw/a};
+  const sum=(w,h)=>area(w,h,ar(panes[0]))+area(w,h,ar(panes[1]));
+  const cols=sum((W-g)/2,H-bar),rows=sum(W,(H-g)/2-bar);
+  box.classList.toggle('rows',rows>cols);
+  panes.forEach(redraw);
+}
+addEventListener('resize',layout);
 setActive(0);
 </script>
 </body>
