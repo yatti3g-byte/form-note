@@ -15,7 +15,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Hiragino Sans
 .panes.two{grid-template-columns:1fr 1fr}
 .panes.two.rows{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
 .pane{display:flex;flex-direction:column;gap:4px;min-height:0;min-width:0}
-.pane[hidden]{display:none}
+[hidden]{display:none!important}
 .bar{display:flex;align-items:center;gap:8px}
 .bar b{width:1.6em;height:1.6em;display:grid;place-items:center;border-radius:50%;background:var(--line)}
 .pane.act .bar b{background:var(--acc);color:var(--accInk)}
@@ -68,6 +68,7 @@ label.chk{display:inline-flex;align-items:center;gap:6px;min-height:44px}
   <button class="btn" id="cmp">並べて比較</button>
   <label class="chk" id="linkw" hidden><input type="checkbox" id="link" checked>A・B連動</label>
   <button class="btn" id="snap">静止画にする</button>
+  <a class="btn" href="help.html" target="_blank" rel="noopener" style="text-decoration:none">使い方</a>
 </div>
 
 <div id="snapbox" hidden>
@@ -123,7 +124,7 @@ function nrm(p,e){
 const panes=[0,1].map(i=>{
   const el=document.createElement('section');el.className='pane';
   el.innerHTML='<div class="bar"><b>'+'AB'[i]+'</b><label class="btn">動画を選ぶ<input type="file" accept="video/*" hidden></label><span class="name">未選択</span></div>'+
-  '<div class="stage"><video playsinline muted preload="auto"></video><canvas></canvas><p class="empty">「動画を選ぶ」から<br>スマホ内の動画を開きます</p></div>';
+  '<div class="stage"><video playsinline muted preload="metadata"></video><canvas></canvas><p class="empty">「動画を選ぶ」から<br>スマホ内の動画を開きます</p></div>';
   $('#panes').append(el);
   const p={i,el,v:el.querySelector('video'),c:el.querySelector('canvas'),shapes:[],cur:null,pend:null};
   p.x=p.c.getContext('2d');
@@ -225,9 +226,25 @@ $('#snap').onclick=()=>{
   const o=document.createElement('canvas');o.width=Math.round(ws.reduce((a,b)=>a+b));o.height=h;
   const x=o.getContext('2d');let off=0;
   cs.forEach((c,k)=>{x.drawImage(c,off,0,ws[k],h);off+=ws[k]});
-  $('#snapimg').src=o.toDataURL('image/png');
+  $('#snapimg').src=withCredit(o).toDataURL('image/png');
   $('#snapbox').hidden=false;
 };
+const APP_NAME='フォームノート';
+/* 保存画像の下に、アプリ名とリンクの帯を付ける（共有された画像からアプリへつなぐため） */
+function withCredit(o){
+  const bh=Math.round(Math.max(72,o.width*0.1)),c=document.createElement('canvas');
+  c.width=o.width;c.height=o.height+bh;
+  const x=c.getContext('2d');x.drawImage(o,0,0);
+  x.fillStyle='#14201c';x.fillRect(0,o.height,c.width,bh);
+  let u='';
+  if(/^https?:$/.test(location.protocol))u=(location.origin+location.pathname).replace(/index\.html$/,'').replace(/^https?:\/\//,'');
+  const pad=Math.round(bh*0.3),font='"Hiragino Sans","Noto Sans JP",system-ui,sans-serif';
+  x.textBaseline='middle';x.textAlign='left';
+  x.fillStyle='#ffffff';x.font='bold '+Math.round(bh*0.34)+'px '+font;
+  x.fillText(APP_NAME,pad,o.height+(u?bh*0.34:bh*0.5));
+  if(u){x.fillStyle='#ffd23f';x.font=Math.round(bh*0.26)+'px '+font;x.fillText(u,pad,o.height+bh*0.72)}
+  return c;
+}
 $('#snapclose').onclick=()=>$('#snapbox').hidden=true;
 /* 2画面時：動画の縦横比と画面の広さから、左右並びか上下並びかを自動で選ぶ */
 function layout(){
