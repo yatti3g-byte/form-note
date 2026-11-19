@@ -46,8 +46,8 @@ label.chk{display:inline-flex;align-items:center;gap:6px;min-height:44px}
   <button class="btn" data-tool="angle">角度（3点タップ）</button>
   <button class="btn" data-tool="pen">フリーハンド</button>
   <input type="color" id="col" value="#ffd23f" aria-label="線の色">
-  <button class="btn" id="undo">取り消し</button>
-  <button class="btn" id="clear">全消去</button>
+  <button class="btn" id="undo">1つ戻す</button>
+  <button class="btn" id="clear">書き込みをすべて消去</button>
 </div>
 
 <div class="row">
@@ -65,16 +65,16 @@ label.chk{display:inline-flex;align-items:center;gap:6px;min-height:44px}
   <select id="fps" aria-label="動画のコマ数">
     <option value="24">24fps</option><option value="30" selected>30fps</option><option value="60">60fps</option><option value="120">120fps</option><option value="240">240fps</option>
   </select>
-  <button class="btn" id="cmp">並べて比較</button>
+  <button class="btn" id="cmp">2画面で比較</button>
   <label class="chk" id="linkw" hidden><input type="checkbox" id="link" checked>A・B連動</label>
-  <button class="btn" id="snap">静止画にする</button>
+  <button class="btn" id="snap">画像を保存</button>
   <a class="btn" href="help.html" target="_blank" rel="noopener" style="text-decoration:none">使い方</a>
 </div>
 
 <div id="snapbox" hidden>
-  <p>画像を長押しして保存するか、スクリーンショットで残せます。SNSやコーチに送ってフォームを確認しましょう。</p>
+  <p>画像を長押しして保存するか、スクリーンショットで残せます。コーチやチームメイトに送って、フォームを確認しましょう。</p>
   <img id="snapimg" alt="書き込み入りの静止画">
-  <button class="btn" id="snapclose">閉じる</button>
+  <div class="row" style="justify-content:center"><button class="btn on" id="snapshare" hidden>共有する</button><button class="btn" id="snapclose">閉じる</button></div>
 </div>
 
 <script>
@@ -197,7 +197,7 @@ $('#cmp').onclick=()=>{
   $('#panes').classList.toggle('two',compare);
   $('#linkw').hidden=!compare;
   $('#cmp').classList.toggle('on',compare);
-  $('#cmp').textContent=compare?'1画面に戻す':'並べて比較';
+  $('#cmp').textContent=compare?'1画面に戻す':'2画面で比較';
   layout();
 };
 panes[1].el.hidden=true;
@@ -226,7 +226,7 @@ $('#snap').onclick=()=>{
   const o=document.createElement('canvas');o.width=Math.round(ws.reduce((a,b)=>a+b));o.height=h;
   const x=o.getContext('2d');let off=0;
   cs.forEach((c,k)=>{x.drawImage(c,off,0,ws[k],h);off+=ws[k]});
-  $('#snapimg').src=withCredit(o).toDataURL('image/png');
+  const cc=withCredit(o);$('#snapimg').src=cc.toDataURL('image/png');prepShare(cc);
   $('#snapbox').hidden=false;
 };
 const APP_NAME='フォームノート';
@@ -245,6 +245,22 @@ function withCredit(o){
   if(u){x.fillStyle='#ffd23f';x.font=Math.round(bh*0.26)+'px '+font;x.fillText(u,pad,o.height+bh*0.72)}
   return c;
 }
+let shareFile=null;
+/* 保存画像を、スマホ標準の共有画面（LINE・WhatsAppなど）へ渡す。非対応のブラウザではボタンを出さない */
+function prepShare(c){
+  const b=$('#snapshare');b.hidden=true;shareFile=null;
+  if(!navigator.share||!navigator.canShare)return;
+  c.toBlob(bl=>{
+    if(!bl)return;
+    const f=new File([bl],'form-note.png',{type:'image/png'});
+    if(navigator.canShare({files:[f]})){shareFile=f;b.hidden=false}
+  },'image/png');
+}
+$('#snapshare').onclick=async()=>{
+  if(!shareFile)return;
+  const u=/^https?:$/.test(location.protocol)?(location.origin+location.pathname).replace(/index\.html$/,''):'';
+  try{await navigator.share({files:[shareFile],title:APP_NAME,text:u?APP_NAME+'\n'+u:APP_NAME})}catch(e){}
+};
 $('#snapclose').onclick=()=>$('#snapbox').hidden=true;
 /* 2画面時：動画の縦横比と画面の広さから、左右並びか上下並びかを自動で選ぶ */
 function layout(){
