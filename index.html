@@ -464,10 +464,10 @@ async function runBurst(ai){
   try{
     await settleP(ts);
     const cs=framesOf(ts,f),lo=-Math.min(...cs.map(c=>c.n)),hi=Math.min(...cs.map(c=>c.last-c.n));
-    let ds=[-1,0,1,2].map(k=>k*iv);
-    const mn=Math.min(...ds),mx=Math.max(...ds);
-    const sh=mn<lo?lo-mn:(mx>hi?hi-mx:0);
-    ds=ds.map(d=>d+sh).filter(d=>d>=lo&&d<=hi);
+    /* 表示中のコマ(0)は必ず入れる。前に2つ・後ろに1つが基本で、端に近いときは足りない側を反対側で補う */
+    const mb=Math.floor(-lo/iv),ma=Math.floor(hi/iv);
+    let nb=Math.min(2,mb),na=Math.min(ma,3-nb);nb=Math.min(mb,3-na);
+    let ds=[];for(let k=-nb;k<=na;k++)ds.push(k*iv);
     if(ds.length<2){b.dataset.keep='1';b.textContent='動画の端に近すぎます';setTimeout(()=>{delete b.dataset.keep;b.textContent=lab},1800);return}
     const items=[];let at=0;
     for(const d of ds){
@@ -476,7 +476,7 @@ async function runBurst(ai){
       const h=Math.min(...fr.map(c=>c.height)),ws=fr.map(c=>c.width*h/c.height);
       const o=document.createElement('canvas');o.width=Math.round(ws.reduce((a,c)=>a+c));o.height=h;
       const x=o.getContext('2d');let off=0;fr.forEach((c,k)=>{x.drawImage(c,off,0,ws[k],h);off+=ws[k]});
-      items.push({c:shrink(o,1600),cap:(d===sh?'● ':'')+capText()});
+      items.push({c:shrink(o,1600),cap:(d===0?'● ':'')+capText()});
     }
     if(at!==0){goFrames(ts,f,-at);await seekWait(ts);await settleP(ts)}
     $('#snapbox').hidden=true;showSheet(items,ai);
