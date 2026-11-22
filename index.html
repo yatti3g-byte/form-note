@@ -67,7 +67,6 @@ label.chk{display:inline-flex;align-items:center;gap:6px;min-height:44px}
 #aimsg{font-size:13px;color:#ffd23f;min-height:1.3em}
 #tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:20%;overflow:auto}
 #snap{position:relative}
-.cnb{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#ffd23f;color:#14201c;font-size:12px;font-weight:700;display:grid;place-items:center;pointer-events:none}
 </style>
 </head>
 <body>
@@ -101,7 +100,7 @@ label.chk{display:inline-flex;align-items:center;gap:6px;min-height:44px}
   <button class="btn" id="cmp">2画面で比較</button>
   <label class="chk" id="linkw" hidden><input type="checkbox" id="link" checked>A・B連動</label>
   <span class="anc" hidden><button class="btn" id="anchor" disabled>ここを基準に同期</button><button class="btn" id="goanchor" disabled>基準へ戻る</button></span>
-  <button class="btn" id="snap">画像を保存<span class="cnb" id="cnb" hidden>0</span></button>
+  <button class="btn" id="snap">画像を保存</button>
   <a class="btn" href="help.html" target="_blank" rel="noopener" style="text-decoration:none">使い方</a>
 </div>
 
@@ -109,19 +108,20 @@ label.chk{display:inline-flex;align-items:center;gap:6px;min-height:44px}
   <p>画像を長押しして保存するか、スクリーンショットで残せます。コーチやチームメイトに送って、フォームを確認しましょう。</p>
   <img id="snapimg" alt="書き込み入りの静止画">
   <div class="row" style="justify-content:center;align-items:center"><button class="btn" id="burst">前後4枚で保存</button><button class="btn on" id="aibtn">AIに相談</button><label style="color:#fff;font-size:14px">間隔 <select id="burstiv"><option value="1">1コマ</option><option value="2">2コマ</option><option value="3">3コマ</option><option value="5" selected>5コマ</option><option value="10">10コマ</option><option value="15">15コマ</option><option value="30">30コマ</option></select></label></div>
-  <div class="row" style="justify-content:center"><button class="btn on" id="snapshare" hidden>共有する</button><button class="btn" id="snapadd">シートに追加</button><button class="btn" id="snapsheet" hidden>並べて保存</button><button class="btn" id="snapclose">閉じる</button></div>
+  <div class="row" style="justify-content:center"><button class="btn on" id="snapshare" hidden>共有する</button><button class="btn" id="snapclose">閉じる</button></div>
 </div>
 <div id="sheetbox" hidden>
   <p>画像を長押しして保存できます。不要な場面は ✕ で外せます。</p>
   <img id="sheetimg" alt="重要な場面を並べた画像">
   <div id="aipanel" hidden>
     <div class="row" style="justify-content:center"><select id="aikind"><option>打者（スイング）</option><option>投手（投球）</option></select><input id="aictx" type="text" maxlength="80" placeholder="学年・左右・悩み（例：小5 右打ち 振り遅れる）"></div>
+    <select id="aipair" hidden><option value="">A・Bの関係：指定しない</option><option value="self">どちらも自分（日付や調子の比較）</option><option value="AM">Aが自分・Bがお手本</option><option value="MA">Aがお手本・Bが自分</option></select>
     <textarea id="aitext" rows="6" aria-label="AIへの質問文"></textarea>
     <button class="btn on" id="aisend">質問文をコピーして、AIアプリに送る</button>
     <div id="aimsg" role="status"></div>
   </div>
   <div id="tray"></div>
-  <div class="row" style="justify-content:center"><button class="btn on" id="sheetshare" hidden>共有する</button><button class="btn" id="sheetclear">全部消す</button><button class="btn" id="sheetclose">閉じる</button></div>
+  <div class="row" style="justify-content:center"><button class="btn on" id="sheetshare" hidden>共有する</button><button class="btn" id="sheetclose">閉じる</button></div>
 </div>
 
 <script>
@@ -367,35 +367,27 @@ function frame(p){
   draw(x,p.shapes,{x:0,y:0,w:c.width,h:c.height},Math.max(3,c.width/300));
   return c;
 }
-let lastSnap=null,addTimer=0;
+
 $('#snap').onclick=()=>{
   /* 再生中に押しても、押した瞬間のコマで止めてから保存する(あとの「前後4枚」の基準がずれないように) */
   const ts=T();ts.forEach(p=>p.v.pause());playLabel();
   settled(ts,snapNow);
 };
 function snapNow(){
-  clearTimeout(addTimer);
   const cs=T().map(frame).filter(Boolean);if(!cs.length)return;
   const h=Math.min(...cs.map(c=>c.height)),ws=cs.map(c=>c.width*h/c.height);
   const o=document.createElement('canvas');o.width=Math.round(ws.reduce((a,b)=>a+b));o.height=h;
   const x=o.getContext('2d');let off=0;
   cs.forEach((c,k)=>{x.drawImage(c,off,0,ws[k],h);off+=ws[k]});
-  lastSnap={o,cap:capText()};
   const cc=withCredit(o);$('#snapimg').src=cc.toDataURL('image/png');prepShare(cc,'#snapshare');
-  $('#snapadd').disabled=false;$('#snapadd').textContent=SH.add;badge();
   $('#snapbox').hidden=false;
 };
 /* ---- 重要な場面を集めて、1枚に並べて保存する ---- */
-const SH={add:'シートに追加',sheet:'並べて保存',added:'追加しました',full:'最大12枚までです',remove:'外す',rel:a=>'基準 '+a+'コマ'};
-const SHEET_MAX=12,sheet=[];
+const SH={remove:'外す',rel:a=>'基準 '+a+'コマ'};
 function capText(){
   const a=panes[active],v=a.v;
   if(compare&&panes.every(q=>q.anchor!=null)){const n=Math.round((v.currentTime-a.anchor)*fps());return SH.rel((n>0?'+':n<0?'−':'±')+Math.abs(n))}
   return v.currentTime.toFixed(2)+' s';
-}
-function badge(){
-  const n=sheet.length;$('#cnb').hidden=!n;$('#cnb').textContent=n;
-  $('#snapsheet').hidden=!n;$('#snapsheet').textContent=SH.sheet+' ('+n+')';
 }
 function shrink(o,maxW){
   if(o.width<=maxW)return o;
@@ -420,6 +412,12 @@ function buildSheet(sheet){
     const r=Math.round(fs*0.75),cx=ox+r+6,cy=oy+r+6;
     x.fillStyle='rgba(20,32,28,.85)';x.beginPath();x.arc(cx,cy,r,0,7);x.fill();
     x.fillStyle='#ffffff';x.font='bold '+fs+'px '+font;x.textAlign='center';x.textBaseline='middle';x.fillText(String(k+1),cx,cy+1);
+    if(it.tags){
+      const ts2=Math.round(fs*0.8),pw2=Math.round(ts2*1.5),ph2=Math.round(ts2*1.4);
+      it.tags.forEach(t=>{const rx=ox+Math.round(t.x*w)-pw2-6,ry=oy+6;
+        x.fillStyle='rgba(255,210,63,.92)';x.fillRect(rx,ry,pw2,ph2);
+        x.fillStyle='#14201c';x.font='bold '+ts2+'px '+font;x.textAlign='center';x.textBaseline='middle';x.fillText(t.l,rx+pw2/2,ry+ph2/2+1);x.textBaseline='alphabetic'});
+    }
     if(it.cap){
       x.font=Math.round(fs*0.8)+'px '+font;x.textAlign='left';
       const tw=x.measureText(it.cap).width,ph=Math.round(fs*1.3),pw=Math.round(tw+fs*0.8);
@@ -431,23 +429,15 @@ function buildSheet(sheet){
 }
 let viewItems=null;
 function showSheet(items,ai){
-  const sheetL=items||sheet;viewItems=sheetL;
+  const sheetL=items||[];viewItems=sheetL;
   $('#sheetbox').classList.toggle('ai',!!ai);$('#aipanel').hidden=!ai;$('#aimsg').textContent='';if(ai)aiFill();
   if(!sheetL.length){$('#sheetbox').hidden=true;return}
   const cc=withCredit(buildSheet(sheetL));$('#sheetimg').src=cc.toDataURL('image/png');prepShare(cc,'#sheetshare');
   const tr=$('#tray');tr.innerHTML='';
   sheetL.forEach((it,k)=>{const b=document.createElement('button');b.className='btn';b.textContent=(k+1)+' ✕';b.setAttribute('aria-label',SH.remove+' '+(k+1));
-    b.onclick=()=>{sheetL.splice(k,1);badge();showSheet(sheetL,!$('#aipanel').hidden)};tr.appendChild(b)});
+    b.onclick=()=>{sheetL.splice(k,1);showSheet(sheetL,!$('#aipanel').hidden)};tr.appendChild(b)});
   $('#sheetbox').hidden=false;
 }
-$('#snapadd').onclick=()=>{
-  if(!lastSnap)return;
-  const b=$('#snapadd');
-  if(sheet.length>=SHEET_MAX){b.textContent=SH.full;return}
-  sheet.push({c:shrink(lastSnap.o,1600),cap:lastSnap.cap});lastSnap=null;badge();
-  b.disabled=true;b.textContent='✓ '+SH.added+' ('+sheet.length+')';
-  clearTimeout(addTimer);addTimer=setTimeout(()=>{$('#snapbox').hidden=true},650);
-};
 
 /* ---- いま表示している場面を中心に、一定間隔の4枚を自動で集めて1枚に並べる ---- */
 let bursting=false;
@@ -476,7 +466,8 @@ async function runBurst(ai){
       const h=Math.min(...fr.map(c=>c.height)),ws=fr.map(c=>c.width*h/c.height);
       const o=document.createElement('canvas');o.width=Math.round(ws.reduce((a,c)=>a+c));o.height=h;
       const x=o.getContext('2d');let off=0;fr.forEach((c,k)=>{x.drawImage(c,off,0,ws[k],h);off+=ws[k]});
-      items.push({c:shrink(o,1600),cap:(d===0?'● ':'')+capText()});
+      let tags=null;if(fr.length>1){let ac=0;const tw=ws.reduce((a,c)=>a+c);tags=fr.map((c,k)=>{ac+=ws[k];return{x:ac/tw,l:String.fromCharCode(65+k)}})}
+      items.push({c:shrink(o,1600),cap:(d===0?'● ':'')+capText(),tags});
     }
     if(at!==0){goFrames(ts,f,-at);await seekWait(ts);await settleP(ts)}
     $('#snapbox').hidden=true;showSheet(items,ai);
@@ -487,19 +478,28 @@ $('#aibtn').onclick=()=>runBurst(true);
 
 /* ---- AIに相談: 質問文(スクリプト)を作って、画像といっしょにAIアプリへ送る ---- */
 function aiPrompt(){
-  const kind=$('#aikind').value,ctx=$('#aictx').value.trim()||'（未記入）';
-  const how=aiPair
-    ?'画像は、2つの動画を同じ瞬間（基準＋コマ数）にそろえて、左をA・右をBとして並べたものです。Aが私（子ども）のフォーム、Bが比較したいお手本です。番号の順に、時間が進みます。'
-    :'画像は、同じ動画の連続した場面を、番号順（時間順）に並べたものです。各コマの左下の数字は動画の時間です。';
-  return '野球の'+kind+'のフォームを見てください。\n\n【前提】\n'+ctx+'\n'+how+'\n\n【お願い】\n1. 良い点（2〜3個）\n2. 気になる点（2〜3個）と、画像のどのコマのどこでそう見えるか\n3. 改善ドリル（家やグラウンドでできるものを3つ。やり方・回数の目安・注意点）\n4. 次に撮るときのアドバイス（カメラの位置・角度・撮るタイミング）\n\n【守ってほしいこと】\n・静止画だけの判断なので、断定せず「見える範囲では」「〜の可能性があります」と書く\n・少年野球の可能性があるので、大人のプロの基準を押し付けず、成長段階とケガの予防を最優先にする\n・痛みや違和感があるときは無理をせず、医師や指導者に相談するよう伝える\n・専門用語には短い説明を付ける';
+  const kind=$('#aikind').value,ctx=$('#aictx').value.trim()||'（未記入）',bat=/打者/.test(kind);
+  const rel={'':'A・Bの関係（どちらが自分か、お手本か）は決めていません。2つの違いを比べてください。','self':'A・Bはどちらも私（子ども）自身のフォームです（日付や調子などが違う2つ）。良くなった点・変わっていない点・悪くなった点を比べてください。','AM':'Aが私（子ども）のフォーム、Bが比較したいお手本です。','MA':'Aがお手本、Bが私（子ども）のフォームです。'}[$('#aipair').value]||'';
+  const look=aiPair
+    ?'・画像には、4つの場面が番号（1〜4）の順に並んでいます。番号が大きいほど、時間が後です。\n・各場面の左半分がA、右半分がBで、それぞれの右上に黄色い「A」「B」の印が付いています。「1-A」「1-B」のように、番号とA/Bの組み合わせで呼んでください。\n・同じ番号のAとBは、同時に取った場面です（2つの動画を同じコマ数だけ動かしています。基準同期を使っているときは、基準からの位置がそろっています）。左下の文字は、基準からのコマ数（または動画の時間）です。'
+    :'・画像には、同じ動画の連続した4つの場面が、番号（1〜4）の順に並んでいます。番号が大きいほど、時間が後です。\n・各場面の左下の文字は動画の時間です。「場面2」「場面3→4」のように、番号で呼んでください。\n・●の付いた場面が、私が止めて選んだ場面です。';
+  const cmp=aiPair
+    ?'1. 比較：番号（1→2→3→4）ごとに、AとBを見比べてください。「1-AとBの違い」のように、各番号で「何が違うか」「どちらが良いか／悪いか」を書き、最後に「AからBで何が変わったか」と、全体として改善・悪化した点をまとめてください。片方だけを見て終わらないでください。'
+    :'1. 変化：場面1→2→3→4で、動きのタイミングや姿勢がどう変わっているかを順に書いてください。';
+  const pts=bat
+    ?'始動〜軸足への体重のかけ方、ステップ足の接地のタイミング、トップ（構え・割れ）の位置、前の肩・体の開き、肘や手の位置、腰の回転、頭の位置、インパクト付近の腕の伸び'
+    :'軸足〜ステップ足のタイミング、グラブ側の引き込みや開き、肘・肩の位置、体幹の傾きと体の開き、リリースポイント、頭の安定、体重移動';
+  const hint=bat&&/遅れ|差し込|詰まる/.test(ctx)?'\n・悩みがタイミングに関することなので、始動、軸足への体重移動、ステップ足の接地、スイング開始のタイミングを特に重点的に見てください。':'';
+  return '野球の'+kind+'のフォームを見てください。\n\n【前提】\n'+ctx+'\n'+(aiPair?rel+'\n':'')+'\n【画像の見方】\n'+look+'\n\n【見てほしい点（候補）】\n'+pts+'\n・これは候補です。画像から実際に見える範囲だけで判断し、悩みに関係しそうなものを優先してください。'+hint+'\n・隠れている、小さい、角度的に判断できない項目は、推測せず「判断できない」と書いてください。\n\n【お願い】\n0. まず、各場面で見えていること（体の向き、足の位置、腕・手・'+(bat?'バット':'ボールとグラブ')+'の位置）を1行ずつ書いてください。\n'+cmp+'\n2. 良い点（2〜3個）\n3. 気になる点（2〜3個）。それぞれ、どの場面のどこでそう見えるか（番号と体の部位）を根拠として書いてください。\n4. 改善ドリル（家やグラウンドでできるものを3つ。やり方・回数の目安・注意点）\n5. 次に撮るときのアドバイス（カメラの位置・角度・撮るタイミング）\n\n【守ってほしいこと】\n・静止画だけの判断なので、断定せず「見える範囲では」「〜の可能性があります」と書く\n・少年野球・成長期の可能性があるので、大人のプロの基準を押し付けず、成長段階とケガの予防を最優先にする\n・痛みや違和感があるときは無理をせず、医師や指導者に相談するよう伝える\n・専門用語には短い説明を付ける';
 }
 let aiEdited=false;
 function aiFill(){
-  try{const k=localStorage.getItem('fn_aikind'),c=localStorage.getItem('fn_aictx');if(k)$('#aikind').value=k;if(c!=null&&!$('#aictx').value)$('#aictx').value=c}catch(e){}
+  $('#aipair').hidden=!aiPair;
+  try{const k=localStorage.getItem('fn_aikind'),c=localStorage.getItem('fn_aictx'),q=localStorage.getItem('fn_aipair');if(q!=null)$('#aipair').value=q;if(k)$('#aikind').value=k;if(c!=null&&!$('#aictx').value)$('#aictx').value=c}catch(e){}
   aiEdited=false;$('#aitext').value=aiPrompt();
 }
-function aiRefresh(){try{localStorage.setItem('fn_aikind',$('#aikind').value);localStorage.setItem('fn_aictx',$('#aictx').value)}catch(e){}if(!aiEdited)$('#aitext').value=aiPrompt()}
-$('#aikind').onchange=$('#aictx').oninput=aiRefresh;
+function aiRefresh(){try{localStorage.setItem('fn_aikind',$('#aikind').value);localStorage.setItem('fn_aictx',$('#aictx').value);localStorage.setItem('fn_aipair',$('#aipair').value)}catch(e){}if(!aiEdited)$('#aitext').value=aiPrompt()}
+$('#aikind').onchange=$('#aipair').onchange=$('#aictx').oninput=aiRefresh;
 $('#aitext').oninput=()=>{aiEdited=true};
 async function copyText(t){
   try{await navigator.clipboard.writeText(t);return true}catch(e){}
@@ -514,8 +514,6 @@ $('#aisend').onclick=async()=>{
   }
   m.textContent=(await cp)?'質問文をコピーしました。上の画像を長押しして保存し、AIアプリで画像と質問文を貼り付けてください。':'質問文を長押しでコピーし、上の画像を長押しで保存して、AIアプリに貼り付けてください。';
 };
-$('#snapsheet').onclick=()=>{clearTimeout(addTimer);$('#snapbox').hidden=true;showSheet(sheet)};
-$('#sheetclear').onclick=()=>{(viewItems||sheet).length=0;badge();$('#sheetbox').hidden=true};
 $('#sheetclose').onclick=()=>$('#sheetbox').hidden=true;
 const APP_HINT='QRコードを読み取ってアプリを開く';
 const APP_NAME='フォームノート';
