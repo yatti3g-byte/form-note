@@ -369,6 +369,11 @@ function frame(p){
 }
 let lastSnap=null,addTimer=0;
 $('#snap').onclick=()=>{
+  /* 再生中に押しても、押した瞬間のコマで止めてから保存する(あとの「前後4枚」の基準がずれないように) */
+  const ts=T();ts.forEach(p=>p.v.pause());playLabel();
+  settled(ts,snapNow);
+};
+function snapNow(){
   clearTimeout(addTimer);
   const cs=T().map(frame).filter(Boolean);if(!cs.length)return;
   const h=Math.min(...cs.map(c=>c.height)),ws=cs.map(c=>c.width*h/c.height);
