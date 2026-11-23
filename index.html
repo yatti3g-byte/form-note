@@ -24,7 +24,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Hiragino Sans
 .panes{display:grid;grid-template-columns:1fr;gap:6px;flex:1;min-height:0}
 .panes.two{grid-template-columns:1fr 1fr}
 .panes.two.rows{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
-.panes{min-height:210px}.panes.two.rows{min-height:420px}
+.panes{min-height:250px}.panes.two.rows{min-height:420px}
 .pane{display:flex;flex-direction:column;gap:4px;min-height:0;min-width:0}
 [hidden]{display:none!important}
 .bar{display:flex;align-items:center;gap:8px}
@@ -95,7 +95,8 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
 #rel{grid-area:rel;font-size:12px}
 @media (orientation:landscape) and (max-height:560px){
   .stage{min-height:110px}.panes{min-height:160px}.panes.two.rows{min-height:320px}
-  .ctl{max-width:none;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"play seek" "set rel" "pair act" "tut tut" "draw draw";align-items:start}
+  .ctl{max-width:none;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"play seek" "set rel" "pair act" "tut draw";align-items:start}
+  .g-tut{justify-content:flex-start}.g-tut .tl{display:none}.g-pair{grid-template-columns:1.5fr 1fr 1fr}.g-pair .chk{grid-column:auto}.g-tut .lnk{min-height:36px}details.draw summary{padding:6px 4px}
 }
 
 .g-tut{grid-area:tut;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0 4px;font-size:14px;color:var(--mute)}
@@ -135,7 +136,7 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
     <select id="speed" aria-label="再生速度">
       <option value="0.1">0.1倍</option><option value="0.25" selected>0.25倍</option><option value="0.5">0.5倍</option><option value="1">1倍</option>
     </select>
-    <select id="fps" aria-label="動画のコマ数">
+    <select id="fps" aria-label="撮影したときのfps（動画のコマ数）">
       <option value="24">24fps</option><option value="30" selected>30fps</option><option value="60">60fps</option><option value="120">120fps</option><option value="240">240fps</option>
     </select>
     <button class="btn" id="cmp">2画面で比較</button>
@@ -289,7 +290,7 @@ const panes=[0,1].map(i=>{
 });
 
 const fps=()=>+$('#fps').value;
-const T=()=>(compare&&$('#link').checked?panes:[panes[active]]).filter(p=>p.v.getAttribute('src'));
+const T=()=>(compare&&$('#link').checked?panes:[panes[active]]).filter(p=>p.v.getAttribute('src')&&p.v.videoWidth>0);
 /* 再生ボタンの表示は、いま「再生」を押したときの動作に合わせる(連動中は、終わった画面を除いた画面の状態で決める) */
 const PLAYTXT=['再生','一時停止'];
 function fixPlayW(){const b=$('#play'),keep=b.textContent;b.style.minWidth='';let w=0;PLAYTXT.forEach(t=>{b.textContent=t;w=Math.max(w,b.getBoundingClientRect().width)});b.textContent=keep;b.style.minWidth=Math.ceil(w)+'px';b.style.justifyContent='center'}
@@ -336,7 +337,9 @@ function settled(ps,cb){
   let left=ps.length;if(!left)return;
   ps.forEach(p=>{
     let done=false;const fin=ok=>{if(done)return;done=true;if(ok===false)p.stale=false;if(--left===0)cb()};
-    if(p.stale&&!p.mid&&p.v.requestVideoFrameCallback){p.wait.push(()=>fin());setTimeout(()=>fin(false),150)}else fin();
+    if(p.stale&&!p.mid&&p.v.requestVideoFrameCallback){p.wait.push(()=>fin());setTimeout(()=>fin(false),150)}
+    else if(p.stale&&!p.v.requestVideoFrameCallback){requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(()=>fin(),60)))}
+    else fin();
   });
 }
 /* 全画面を同じコマ数だけ動かす。どれか1つでも動画の端を越えるときは、全部動かさない(差が崩れないように)。
@@ -519,6 +522,7 @@ function buildSheet(sheet){
 let bursting=false;
 const seekWait=ps=>Promise.all(ps.map(p=>new Promise(r=>{const v=p.v;let d=false;const f=()=>{if(d)return;d=true;v.removeEventListener('seeked',f);r()};v.addEventListener('seeked',f);setTimeout(f,1500)})));
 const settleP=ps=>new Promise(r=>settled(ps,r));
+const SETTLE_MS=('requestVideoFrameCallback' in HTMLVideoElement.prototype)?60:200;  /* コマ到着を確認できないブラウザでは、少し長く待つ */
 async function buildFour(clean){
   if(bursting)return;
   const ts=T().filter(p=>p.v.videoWidth);if(!ts.length)return;
@@ -526,6 +530,7 @@ async function buildFour(clean){
   aiPair=ts.length>1;
   bursting=true;ctl.forEach(e=>e.disabled=true);btn.textContent='作成中…';
   ts.forEach(p=>p.v.pause());
+  let at=0;
   try{
     await settleP(ts);
     const cs=framesOf(ts,f),lo=-Math.min(...cs.map(c=>c.n)),hi=Math.min(...cs.map(c=>c.last-c.n));
@@ -534,9 +539,9 @@ async function buildFour(clean){
     let nb=Math.min(2,mb),na=Math.min(ma,3-nb);nb=Math.min(mb,3-na);
     let ds=[];for(let k=-nb;k<=na;k++)ds.push(k*iv);
     if(ds.length<2){btn.dataset.keep='1';btn.textContent='動画の端に近すぎます';setTimeout(()=>{delete btn.dataset.keep;btn.textContent=lab},1800);return}
-    const items=[];let at=0;
+    const items=[];at=0;
     for(const d of ds){
-      if(d!==at){goFrames(ts,f,d-at);at=d;await seekWait(ts);await settleP(ts);await new Promise(r=>setTimeout(r,60))}
+      if(d!==at){goFrames(ts,f,d-at);at=d;await seekWait(ts);await settleP(ts);await new Promise(r=>setTimeout(r,SETTLE_MS))}
       const fr=ts.map(p=>frame(p,!clean)).filter(Boolean);if(!fr.length)continue;
       const h=Math.min(...fr.map(c=>c.height)),ws=fr.map(c=>c.width*h/c.height);
       const o=document.createElement('canvas');o.width=Math.round(ws.reduce((a,c)=>a+c));o.height=h;
@@ -544,9 +549,11 @@ async function buildFour(clean){
       let tags=null;if(fr.length>1){let ac=0;const tw=ws.reduce((a,c)=>a+c);tags=fr.map((c,k)=>{ac+=ws[k];return{x:ac/tw,l:String.fromCharCode(65+k)}})}
       items.push({c:shrink(o,1600),cap:(d===0?'● ':'')+capText(),tags});
     }
-    if(at!==0){goFrames(ts,f,-at);await seekWait(ts);await settleP(ts)}
+    if(at!==0){goFrames(ts,f,-at);at=0;await seekWait(ts);await settleP(ts)}
     const cc=withCredit(buildSheet(items));view[clean?5:4]={cc,items,url:cc.toDataURL('image/png')};
-  }finally{bursting=false;ctl.forEach(e=>e.disabled=false);if(!btn.dataset.keep)btn.textContent=lab}
+  }finally{
+    if(at!==0){try{goFrames(ts,f,-at);at=0}catch(e){}}  /* 途中で失敗しても、再生位置を元に戻す */
+    bursting=false;ctl.forEach(e=>e.disabled=false);if(!btn.dataset.keep)btn.textContent=lab}
 }
 
 /* ---- AIに相談: 質問文(スクリプト)を作って、画像といっしょにAIアプリへ送る ---- */
