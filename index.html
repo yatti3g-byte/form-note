@@ -95,11 +95,29 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
 #rel{grid-area:rel;font-size:12px}
 @media (orientation:landscape) and (max-height:560px){
   .stage{min-height:110px}.panes{min-height:160px}.panes.two.rows{min-height:320px}
-  .ctl{max-width:none;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"play seek" "set rel" "pair act" "draw draw";align-items:start}
+  .ctl{max-width:none;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"play seek" "set rel" "pair act" "tut tut" "draw draw";align-items:start}
 }
+
+.g-tut{grid-area:tut;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0 4px;font-size:14px;color:var(--mute)}
+.g-tut .tl{flex-basis:100%;text-align:center;margin-top:2px}.g-tut .lnk{padding:0 10px}
+.g-tut .lnk{background:none;border:0;font:inherit;font-size:14px;cursor:pointer;color:var(--accent,#0f6b4b);min-height:44px}
+#tutmask{position:fixed;z-index:30;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.6);outline:3px solid #ffd23f;pointer-events:none;transition:all .2s}
+#tutcard{position:fixed;left:12px;right:12px;max-width:520px;margin:0 auto;z-index:31;background:#fff;color:#1b2b24;border-radius:12px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.4);font-size:15px;line-height:1.6}
+#tutcard h3{margin:0 0 4px;font-size:16px}
+#tutcard p{margin:0 0 10px;text-wrap:pretty;word-break:auto-phrase}
+#tutcard .row{display:flex;gap:8px;align-items:center}
+#tutcard .row .grow{flex:1;font-size:12px;color:#5b6b63}
+#tutcard button{min-height:44px;padding:0 16px;border-radius:8px;border:1px solid #c9d3cd;background:#fff;font:inherit;cursor:pointer}
+#tutcard button.go{background:#0f6b4b;color:#fff;border-color:#0f6b4b;font-weight:700}
+#tutcard button:disabled{opacity:.4}
+#tutbn{max-width:640px;margin:0 auto 6px;background:#0f6b4b;color:#fff;border-radius:12px;padding:10px 12px;display:flex;gap:8px;align-items:center;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+#tutbn span{flex:1}.nb{white-space:nowrap}#tutbn button{min-height:44px;border-radius:8px;border:1px solid #fff;background:transparent;color:#fff;font:inherit;padding:0 12px;cursor:pointer}
+#tutbn[hidden],#tutmask[hidden],#tutcard[hidden]{display:none!important}
+#tutbn button.go{background:#fff;color:#0f6b4b;font-weight:700}
 </style>
 </head>
 <body>
+<div id="tutbn" hidden><span><span class="nb">はじめての方へ：</span><span class="nb">AIに相談するまでを</span><span class="nb">案内します</span></span><button class="go" id="tutgo">見てみる</button><button id="tutno" aria-label="閉じる">×</button></div>
 <div class="panes" id="panes"></div>
 
 <div class="ctl">
@@ -131,6 +149,7 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
     <button class="btn" id="snap">保存・共有</button>
     <a class="lnk" href="help.html" target="_blank" rel="noopener">使い方</a>
   </div>
+  <div class="g-tut"><span class="tl">はじめての方へ：</span><button class="lnk" id="tutbtn">1本の動画でAI相談</button><button class="lnk" id="tutbtn2">2画面で比べてAI相談</button></div>
   <details class="draw" id="draw">
     <summary>描画ツール（線・角度）</summary>
     <div class="g-tools" id="tools">
@@ -147,6 +166,7 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
   </details>
 </div>
 
+<div id="tutmask" hidden></div><div id="tutcard" hidden role="dialog" aria-live="polite"></div>
 <div id="snapbox" hidden>
   <div class="seg"><button class="btn on" id="m1">いまの場面</button><button class="btn" id="m4">前後4枚</button><label id="ivw" hidden>間隔 <select id="burstiv"><option value="1">1コマ</option><option value="2">2コマ</option><option value="3">3コマ</option><option value="5" selected>5コマ</option><option value="10">10コマ</option><option value="15">15コマ</option><option value="30">30コマ</option></select></label></div>
   <img id="snapimg" alt="書き込み入りの静止画">
@@ -723,6 +743,74 @@ function layout(){
 addEventListener('resize',layout);
 setActive(0);
 fixPlayW();addEventListener('resize',fixPlayW);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fixPlayW);
+
+/* はじめての方へ: AI相談までの流れを、画面を指しながら案内する */
+const TUTS={basic:[
+ {t:'① 動画を選ぶ',m:'スマホに入っているスイングや投球の動画を選びます。動画はスマホの中だけで見ていて、外には送られません。',sel:()=>'.pane .bar label',done:()=>panes[0].v.videoWidth>0,need:true,hint:'動画を選ぶと次へ進めます'},
+ {t:'② 見てほしい瞬間に合わせる',m:'◀ ▶ で1コマずつ動かして、見てほしい瞬間（例：ボールを打つ瞬間）で止めます。スライダーで大まかに動かすこともできます。',sel:()=>'.g-play'},
+ {t:'③ 「AIに相談」を押す',m:'止めた場面の前後4枚の画像が作られます。押してみましょう。',sel:()=>'#aimain',done:()=>!$('#snapbox').hidden&&!$('#aipanel').hidden,act:()=>$('#aimain').click(),actlabel:'押してみる'},
+ {t:'④ 4枚の画像ができました',m:'上の画像は、止めた場面の前後です。●が止めた場面で、線や角度の書き込みは入りません。ここの「間隔」で、コマの間隔を変えられます。',sel:()=>'#burstiv'},
+ {t:'⑤ 学年・左右・悩みを書く',m:'例：「小5 右打ち 振り遅れる」。書かなくても送れますが、書くとAIの答えが具体的になります。',sel:()=>'#aictx'},
+ {t:'⑥ AIアプリに送る',m:'このボタンで質問文がコピーされ、共有画面が開きます。ChatGPT や Claude など、お使いのAIアプリを選び、画像と質問文を送ってください。共有に出ないときは、画像を長押しで保存して、質問文を貼り付けます。',sel:()=>'#aisend',last:true}
+],cmp:[
+ {t:'① 2画面にする',m:'2つの動画を並べて比べます。自分と見本、先月の自分と今日の自分、などです。',sel:()=>'#cmp',done:()=>compare,act:()=>$('#cmp').click(),actlabel:'2画面にする'},
+ {t:'② AとBの動画を選ぶ',m:'AとB、それぞれ「動画を選ぶ」から動画を選びます。2つとも選ぶと次へ進めます。',sel:()=>'#panes .pane:nth-of-type('+(panes[0].v.videoWidth>0?2:1)+') .bar label',done:()=>panes.every(p=>p.v.videoWidth>0),need:true,hint:'2つ選ぶと次へ進めます'},
+ {t:'③ 同じ瞬間に合わせる',m:'動かしたい画面をタップして選び、◀ ▶ で1コマずつ動かします。AとBを、同じ動作の瞬間（例：足をついた瞬間、ボールを打つ瞬間）にそれぞれ合わせます。',sel:()=>'#panes'},
+ {t:'④ 基準を決める',m:'2つが同じ瞬間になったら「ここを基準に同期」を押します。ここが2つの動画の「そろえた場所」になります。',sel:()=>'#anchor',done:()=>panes.every(p=>p.anchor!=null),act:()=>$('#anchor').click(),actlabel:'基準にする'},
+ {t:'⑤ 連動して動かす',m:'これで、コマ送りやスライダーで2つが同時に動きます。ズレは「基準 ±Nコマ」と表示されます。「基準へ戻る」で、そろえた場所に戻れます。「A・B連動」を切ると、別々に動かせます。',sel:()=>'.g-play'},
+ {t:'⑥ 見てほしい瞬間で止めて「AIに相談」',m:'相談したい場面で止めて、押します。AとBが左右に並んだ、前後4組の画像が作られます。',sel:()=>'#aimain',done:()=>!$('#snapbox').hidden&&!$('#aipanel').hidden,act:()=>$('#aimain').click(),actlabel:'押してみる'},
+ {t:'⑦ AとBの関係を選ぶ',m:'AとBが「自分と見本」なのか、「どちらも自分（前と後）」なのかを選びます。Aが左・Bが右とは限らないので、ここで質問文に反映します。',sel:()=>'#aipair'},
+ {t:'⑧ AIアプリに送る',m:'このボタンで質問文がコピーされ、共有画面が開きます。AIアプリを選び、画像と質問文を送ってください。',sel:()=>'#aisend',last:true}
+]};
+let TUT=TUTS.basic;
+let tutI=-1,tutTm=null;
+const tutLS=v=>{try{localStorage.setItem('fn_tut','1')}catch(e){}};
+function tutPlace(){
+  if(tutI<0)return;const st=TUT[tutI];const el=document.querySelector(st.sel());const mk=$('#tutmask'),cd=$('#tutcard');
+  if(!el||el.offsetParent===null&&getComputedStyle(el).position!=='fixed'){mk.style.display='none';return}
+  const r=el.getBoundingClientRect();
+  if(r.top<0||r.bottom>innerHeight){el.scrollIntoView({block:'center',behavior:'auto'})}
+  const q=el.getBoundingClientRect(),pad=6;mk.style.display='block';
+  mk.style.left=(q.left-pad)+'px';mk.style.top=(q.top-pad)+'px';mk.style.width=(q.width+pad*2)+'px';mk.style.height=(q.height+pad*2)+'px';
+  const mid=q.top+q.height/2;if(mid>innerHeight/2){cd.style.top='12px';cd.style.bottom='auto'}else{cd.style.bottom='12px';cd.style.top='auto'}
+}
+function tutShow(i){
+  tutI=i;const st=TUT[i];let cd=$('#tutcard');
+  cd.innerHTML='<h3></h3><p></p><div class="row"><span class="grow"></span><button id="tutskip">やめる</button><button class="go" id="tutnext"></button></div>';
+  cd.querySelector('h3').textContent=st.t;cd.querySelector('p').textContent=st.m;
+  cd.querySelector('.grow').textContent=(i+1)+' / '+TUT.length;
+  const nx=$('#tutnext');nx.textContent=st.last?'完了':st.act?st.actlabel:'次へ';
+  $('#tutskip').onclick=tutEnd;
+  nx.onclick=()=>{if(st.last)return tutEnd();if(st.act&&!(st.done&&st.done()))st.act();else tutNext()};
+  nx.disabled=!!(st.need&&!st.done());
+  tutPlace();
+}
+function tutNext(){
+  let i=tutI+1;
+  while(i<TUT.length&&TUT[i].skipIf&&TUT[i].skipIf())i++;
+  if(i>=TUT.length)return tutEnd();tutShow(i);
+}
+function tutStart(k){
+  TUT=TUTS[k||'basic'];tutLS();$('#tutbn').hidden=true;$('#tutmask').hidden=false;$('#tutcard').hidden=false;
+  let i=0;if(TUT[0].done())i=1;
+  if(!$('#snapbox').hidden){$('#snapbox').hidden=true;closeAI()}
+  tutShow(i);clearInterval(tutTm);
+  tutTm=setInterval(()=>{
+    if(tutI<0)return;const st=TUT[tutI];
+    if(st.done&&st.done()&&!st.last){tutNext();return}
+    const nx=$('#tutnext');if(nx&&st.need)nx.disabled=!st.done();
+    tutPlace();
+  },350);
+}
+function tutEnd(){
+  clearInterval(tutTm);tutI=-1;$('#tutmask').hidden=true;$('#tutcard').hidden=true;
+}
+$('#tutbtn').onclick=()=>tutStart('basic');
+$('#tutbtn2').onclick=()=>tutStart('cmp');
+$('#tutgo').onclick=()=>tutStart('basic');
+$('#tutno').onclick=()=>{tutLS();$('#tutbn').hidden=true};
+addEventListener('resize',tutPlace);
+try{if(!localStorage.getItem('fn_tut'))$('#tutbn').hidden=false}catch(e){$('#tutbn').hidden=false}
 </script>
 </body>
 </html>
