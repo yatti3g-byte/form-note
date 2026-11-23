@@ -115,6 +115,8 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
 #tutbn span{flex:1}.nb{white-space:nowrap}#tutbn button{min-height:44px;border-radius:8px;border:1px solid #fff;background:transparent;color:#fff;font:inherit;padding:0 12px;cursor:pointer}
 #tutbn[hidden],#tutmask[hidden],#tutcard[hidden]{display:none!important}
 #tutbn button.go{background:#fff;color:#0f6b4b;font-weight:700}
+.g-sup{text-align:center}.g-sup[hidden]{display:none}.g-sup .lnk{display:inline-block;min-height:44px}
+@media (orientation:landscape) and (max-height:560px){.g-sup{display:none}}
 </style>
 </head>
 <body>
@@ -165,6 +167,7 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
       <span class="hintline" id="toolhint">2点をドラッグして線を引く</span>
     </div>
   </details>
+  <div class="g-sup" hidden><a class="lnk" id="supportlink" href="#" target="_blank" rel="noopener">☕ 開発を支援する</a></div>
 </div>
 
 <div id="tutmask" hidden></div><div id="tutcard" hidden role="dialog" aria-live="polite"></div>
@@ -753,6 +756,9 @@ setActive(0);
 fixPlayW();addEventListener('resize',fixPlayW);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fixPlayW);
 
 /* はじめての方へ: AI相談までの流れを、画面を指しながら案内する */
+/* 開発支援(Buy Me a Coffee)のURL。空のままなら、ボタンは表示されません */
+const SUPPORT_URL='https://buymeacoffee.com/formnote';
+if(SUPPORT_URL){$('#supportlink').href=SUPPORT_URL;document.querySelector('.g-sup').hidden=false}
 const TUTS={basic:[
  {t:'動画を選ぶ',m:'スマホに入っているスイングや投球の動画を選びます。動画はスマホの中だけで見ていて、外には送られません。',sel:()=>'.pane .bar label',done:()=>panes[0].v.videoWidth>0,need:true,hint:'動画を選ぶと次へ進めます'},
  {t:'見てほしい瞬間に合わせる',m:'◀ ▶ で1コマずつ動かして、見てほしい瞬間（例：ボールを打つ瞬間）で止めます。スライダーで大まかに動かすこともできます。',sel:()=>['.g-play','.g-seek']},
