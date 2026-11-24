@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>フォームノート</title>
+<title>FormNote</title>
 <meta name="description" content="コマ送り、角度の測定、2画面での比較ができる無料の野球フォームチェックツール。動画は端末の中だけで処理されます。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="フォームノート">
+<meta property="og:title" content="FormNote">
 <meta property="og:description" content="コマ送り、角度の測定、2画面での比較ができる無料の野球フォームチェックツール。動画は端末の中だけで処理されます。">
 <meta property="og:url" content="https://yatti3g-byte.github.io/form-note/">
 <meta property="og:image" content="https://yatti3g-byte.github.io/form-note/og.jpg">
@@ -120,7 +120,7 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
 </style>
 </head>
 <body>
-<div id="tutbn" hidden><span><span class="nb">はじめての方へ：</span><span class="nb">AIに相談するまでを</span><span class="nb">案内します</span></span><button class="go" id="tutgo">見てみる</button><button id="tutno" aria-label="閉じる">×</button></div>
+<div id="tutbn" hidden><span><span class="nb">はじめての方へ：</span><span class="nb">動画を比べてAIに相談するまでを</span><span class="nb">案内します</span></span><button class="go" id="tutgo">見てみる</button><button id="tutno" aria-label="閉じる">×</button></div>
 <div class="panes" id="panes"></div>
 
 <div class="ctl">
@@ -152,7 +152,7 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
     <button class="btn" id="snap">保存・共有</button>
     <a class="lnk" href="help.html" target="_blank" rel="noopener">使い方</a>
   </div>
-  <div class="g-tut"><span class="tl">はじめての方へ：</span><button class="lnk" id="tutbtn">1本の動画でAI相談</button><button class="lnk" id="tutbtn2">2画面で比べてAI相談</button></div>
+  <div class="g-tut"><span class="tl">はじめての方へ：</span><button class="lnk" id="tutbtn2">2画面で比べてAI相談</button><button class="lnk" id="tutbtn">1本の動画でAI相談</button></div>
   <details class="draw" id="draw">
     <summary>描画ツール（線・角度）</summary>
     <div class="g-tools" id="tools">
@@ -232,7 +232,7 @@ function nrm(p,e){
 const panes=[0,1].map(i=>{
   const el=document.createElement('section');el.className='pane';
   el.innerHTML='<div class="bar"><b>'+'AB'[i]+'</b><label class="btn" aria-label="動画を選ぶ"><span class="lf">動画を選ぶ</span><span class="ls">選ぶ</span><input type="file" accept="video/*" multiple hidden></label><span class="name">未選択</span><span class="nav" hidden><button type="button" class="btn" data-d="-1" aria-label="前の動画">◀</button><span class="cnt"></span><button type="button" class="btn" data-d="1" aria-label="次の動画">▶</button></span></div>'+
-  '<div class="stage"><video playsinline muted preload="metadata"></video><canvas></canvas><p class="empty">「動画を選ぶ」から<br>スマホ内の動画を開きます</p></div>';
+  '<div class="stage"><video playsinline muted preload="metadata"></video><canvas></canvas><p class="empty">「動画を選ぶ」から<br>スマホ内の動画を開きます'+(i===0?'<br>2本まとめて選ぶと、2画面で比べられます':'')+'</p></div>';
   $('#panes').append(el);
   const p={i,el,v:el.querySelector('video'),c:el.querySelector('canvas'),shapes:[],cur:null,pend:null,list:[],pos:0};
   p.x=p.c.getContext('2d');
@@ -248,7 +248,13 @@ const panes=[0,1].map(i=>{
     el.querySelector('.empty').hidden=true;
     p.shapes=[];p.pend=null;p.cur=null;p.anchor=null;setActive(i);navUI();ancUI();
   };
-  el.querySelector('input').onchange=e=>{const fs=[...e.target.files];if(!fs.length)return;p.list=fs;open(0);e.target.value=''};
+  p.open=open;
+  el.querySelector('input').onchange=e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;
+    /* 2本以上をまとめて選んだら、自動で2画面にして、1本目をA、2本目をBに入れる */
+    if(fs.length>=2&&(!compare||!panes.some(q=>q.v.getAttribute('src')))){
+      if(!compare)setCompare(true);
+      panes.forEach(q=>q.list=fs);panes[0].open(0);panes[1].open(1);setActive(0);return}
+    p.list=fs;open(0)};
   el.querySelectorAll('.nav button').forEach(bt=>bt.onclick=()=>open(p.pos+(+bt.dataset.d)));
   const bad=()=>{const m=el.querySelector('.empty');m.innerHTML='この動画は再生できません<br>この端末が対応していない形式の可能性があります';m.hidden=false};
   p.v.onerror=()=>{if(p.v.getAttribute('src'))bad()};
@@ -398,8 +404,10 @@ $('#seek').oninput=e=>{
     ts.forEach((p,j)=>{p.tgt=cs[j].o+(cs[j].n+d+0.5)/f;p.v.currentTime=p.tgt});
   });
 };
-$('#cmp').onclick=()=>{
-  compare=!compare;
+function setCompare(on){
+  compare=on;LK=null;
+  /* 2画面に入った直後は連動を外しておく。AとBを別々に同じ瞬間へ合わせられる(基準を決めると連動が入る) */
+  if(compare)$('#link').checked=false;
   panes[1].el.hidden=!compare;
   $('#panes').classList.toggle('two',compare);
   $('#pairrow').hidden=!compare;$('#linkw').hidden=!compare;
@@ -407,8 +415,9 @@ $('#cmp').onclick=()=>{
   $('#cmp').classList.toggle('on',compare);
   if(!compare&&active===1)setActive(0);
   $('#cmp').textContent=compare?'1画面に戻す':'2画面で比較';
-  layout();
-};
+  layout();playLabel();
+}
+$('#cmp').onclick=()=>setCompare(!compare);
 panes[1].el.hidden=true;
 $('#link').addEventListener('change',()=>{LK=null;playLabel()});$('#cmp').addEventListener('click',()=>{LK=null;playLabel()});
 document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{
@@ -598,7 +607,7 @@ $('#aisend').onclick=async()=>{
   m.textContent=(await cp)?'質問文をコピーしました。上の画像を長押しして保存し、AIアプリで画像と質問文を貼り付けてください。':'質問文を長押しでコピーし、上の画像を長押しで保存して、AIアプリに貼り付けてください。';
 };
 const APP_HINT='QRコードを読み取ってアプリを開く';
-const APP_NAME='フォームノート';
+const APP_NAME='FormNote';
 /* 保存画像の下に、アプリ名とリンクの帯を付ける（共有された画像からアプリへつなぐため） */
 /* QRコード生成（外部ライブラリなし）。バイトモード・誤り訂正L・バージョン1〜4（URL 78文字まで）。収まらない場合は null */
 function qrMatrix(text){
@@ -767,11 +776,8 @@ const TUTS={basic:[
  {t:'年齢・左右・悩みを書く',m:'例：「小5 右打ち 振り遅れる」「40代 草野球 右打ち 差し込まれる」。書かなくても送れますが、書くとAIの答えが具体的になります。',sel:()=>'#aictx'},
  {t:'AIアプリに送る',m:'このボタンで質問文がコピーされ、共有画面が開きます。ChatGPT や Claude など、お使いのAIアプリを選び、画像と質問文を送ってください。共有に出ないときは、画像を長押しで保存して、質問文を貼り付けます。',sel:()=>'#aisend',last:true}
 ],cmp:[
- {t:'2画面にする',m:'2つの動画を並べて比べます。自分と見本、先月の自分と今日の自分、などです。',sel:()=>'#cmp',done:()=>compare,act:()=>$('#cmp').click(),actlabel:'2画面にする'},
- {t:'Aの動画を選ぶ',m:'Aには、見てほしい動画を選びます。例：今日の自分のスイング。「どちらが自分か」は決まっていません。あとでAとBの関係を選べます。',sel:()=>'#panes .pane:nth-of-type(1) .bar label',done:()=>panes[0].v.videoWidth>0,need:true},
- {t:'Bの動画を選ぶ',m:'Bには、比べたい動画を選びます。例：先月の自分、お手本にしたい人の動画。AとBは、同じ動作（打つ・投げる）を、同じ向き（正面・横など）から撮った動画だと、比べやすくなります。',sel:()=>'#panes .pane:nth-of-type(2) .bar label',done:()=>panes.every(p=>p.v.videoWidth>0),need:true},
- {t:'「A・B連動」を外す',m:'初めは、AとBが連動して動きます。AとBを別々に合わせるため、まずチェックを外します。',sel:()=>'#linkw',done:()=>!$('#link').checked,act:()=>{if($('#link').checked)$('#link').click()},actlabel:'外す'},
- {t:'AとBを、同じ瞬間に合わせる',m:'Aの画面をタップして選び、下の ◀ ▶ やスライダーで、見たい瞬間（例：ボールを打つ瞬間）に合わせます。次にBの画面をタップして選び、Bも同じ動作の瞬間に合わせます。',sel:()=>['#panes','.g-play','.g-seek']},
+ {t:'比べたい動画を2本選ぶ',m:'「動画を選ぶ」を押して、比べたい動画を2本まとめて選びます。1本目がA、2本目がBになり、自動で2画面になります。自分と見本、先月の自分と今日の自分、などです。同じ動作（打つ・投げる）を、同じ向き（正面・横など）から撮った動画だと、比べやすくなります。',sel:()=>'#panes .pane:nth-of-type(1) .bar label',done:()=>compare&&panes.every(p=>p.v.videoWidth>0),need:true,hint:'2本選ぶと次へ進めます'},
+ {t:'AとBを、同じ瞬間に合わせる',m:'最初は、AとBは別々に動きます。Aの画面をタップして選び、下の ◀ ▶ やスライダーで、見たい瞬間（例：ボールを打つ瞬間）に合わせます。次にBの画面をタップして選び、Bも同じ動作の瞬間に合わせます。',sel:()=>['#panes','.g-play','.g-seek']},
  {t:'基準を決める',m:'2つが同じ瞬間になったら「ここを基準に同期」を押します。ここが「そろえた場所」になり、連動も自動で入ります。',sel:()=>'#anchor',done:()=>panes.every(p=>p.anchor!=null),act:()=>$('#anchor').click(),actlabel:'基準にする'},
  {t:'連動して動かす',m:'これで、コマ送りやスライダーで、2つが同時に動きます。ズレは「基準 ±Nコマ」と表示されます。「基準へ戻る」で、そろえた場所に戻れます。',sel:()=>['.g-play','.g-seek']},
  {t:'見てほしい瞬間で止めて「AIに相談」',m:'相談したい場面で止めて、押します。AとBが左右に並んだ、前後4組の画像が作られます。',sel:()=>'#aimain',done:()=>!$('#snapbox').hidden&&!$('#aipanel').hidden,act:()=>$('#aimain').click(),actlabel:'押してみる'},
@@ -830,7 +836,7 @@ function tutEnd(){
 }
 $('#tutbtn').onclick=()=>tutStart('basic');
 $('#tutbtn2').onclick=()=>tutStart('cmp');
-$('#tutgo').onclick=()=>tutStart('basic');
+$('#tutgo').onclick=()=>tutStart('cmp');
 $('#tutno').onclick=()=>{tutLS();$('#tutbn').hidden=true};
 addEventListener('resize',tutPlace);
 try{if(!localStorage.getItem('fn_tut'))$('#tutbn').hidden=false}catch(e){$('#tutbn').hidden=false}
