@@ -175,7 +175,7 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
     </div>
   </details>
   <div class="g-sup" hidden><a class="lnk" id="supportlink" href="#" target="_blank" rel="noopener">☕ DugoutToolsを応援する</a></div>
-  <section class="family" id="series"><h2>DugoutToolsのアプリ</h2><p>少年野球の現場で使える、無料・登録なしの道具。記録や写真を、こちらのサーバーに送ることはありません。外に出るのは、自分で共有したり、AIアプリに渡したりしたときだけです。</p><ul><li><a href="https://yatti3g-byte.github.io/TapScore/" target="_blank" rel="noopener">TapScore</a><span>1球ずつタップで記録するスコアブック</span></li><li><a href="https://yatti3g-byte.github.io/PitchCount/" target="_blank" rel="noopener">PitchCount</a><span>球数制限に合わせた球数カウンター</span></li><li><b>FormNote</b><span>コマ送りと角度の測定でフォームを確認（このアプリ）</span></li><li><a href="https://yatti3g-byte.github.io/ShotFind/" target="_blank" rel="noopener">ShotFind</a><span>LINEアルバムから、わが子の写真をAIで探す</span></li></ul></section>
+  <section class="family" id="series"><h2>DugoutToolsのアプリ</h2><p>少年野球の現場で使える、無料・登録なしの道具。記録や写真を、こちらのサーバーに送ることはありません。外に出るのは、自分で共有したり、AIアプリに渡したりしたときだけです。</p><ul><li><a href="https://yatti3g-byte.github.io/TapScore/" target="_blank" rel="noopener">TapScore</a><span>1球ずつタップして記録するスコアブック</span></li><li><a href="https://yatti3g-byte.github.io/PitchCount/" target="_blank" rel="noopener">PitchCount</a><span>球数制限に合わせた球数カウンター</span></li><li><b>FormNote</b><span>コマ送りと角度の測定で、フォームを確認（このアプリ）</span></li><li><a href="https://yatti3g-byte.github.io/ShotFind/" target="_blank" rel="noopener">ShotFind</a><span>チームの試合写真から、わが子の写真を探す</span></li></ul></section>
   <p class="ver" id="ver">FormNote 0.1（試作版）</p>
 </div>
 
@@ -186,7 +186,7 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
   <p class="hint" id="snaphint">画像を長押しして保存できます。</p>
   <div class="row" style="justify-content:center"><button class="btn pri" id="snapshare" hidden>共有する</button><button class="btn" id="snapclose">閉じる</button></div>
   <div id="aipanel" hidden>
-    <div class="row" style="justify-content:center"><select id="aikind"><option>打者（スイング）</option><option>投手（投球）</option></select><input id="aictx" type="text" maxlength="80" placeholder="年齢・左右・悩み"></div>
+    <div class="row" style="justify-content:center"><select id="aikind"><option value="bat">打者（スイング）</option><option value="pitch">投手（投球）</option></select><input id="aictx" type="text" maxlength="80" placeholder="年齢・左右・悩み"></div>
     <select id="aipair" hidden><option value="">A・Bの関係：指定しない</option><option value="self">どちらも自分（日付や調子の比較）</option><option value="AM">Aが自分・Bがお手本</option><option value="MA">Aがお手本・Bが自分</option></select>
     <textarea id="aitext" rows="6" aria-label="AIへの質問文"></textarea>
     <button class="btn pri" id="aisend">質問文をコピーして、AIアプリに送る</button>
@@ -580,7 +580,7 @@ async function buildFour(clean){
 
 /* ---- AIに相談: 質問文(スクリプト)を作って、画像といっしょにAIアプリへ送る ---- */
 function aiPrompt(){
-  const kind=$('#aikind').value,ctx=$('#aictx').value.trim()||'（未記入）',bat=/打者/.test(kind);
+  const kind=$('#aikind').selectedOptions[0].textContent,ctx=$('#aictx').value.trim()||'（未記入）',bat=/打者/.test(kind);
   const rel={'':'A・Bの関係（どちらが自分か、お手本か）は決めていません。2つの違いを比べてください。','self':'A・Bはどちらも私自身のフォームです（日付や調子などが違う2つ）。良くなった点・変わっていない点・悪くなった点を比べてください。','AM':'Aが私のフォーム、Bが比較したいお手本です。','MA':'Aがお手本、Bが私のフォームです。'}[$('#aipair').value]||'';
   const it=view[5]||view[4],n=it&&it.items&&it.items.length>1?it.items.length:4,sq=Array.from({length:n},(_,i)=>i+1);
   const sub=t=>t.replace(/\{N\}/g,n).replace(/\{SEQ\}/g,sq.join('→')).replace(/\{LST\}/g,sq.join(', '));
@@ -600,10 +600,10 @@ function aiPrompt(){
 let aiEdited=false;
 function aiFill(){
   $('#aipair').hidden=!aiPair;
-  try{const k=localStorage.getItem('fn_aikind'),c=localStorage.getItem('fn_aictx'),q=localStorage.getItem('fn_aipair');if(q!=null)$('#aipair').value=q;if(k)$('#aikind').value=k;if(c!=null&&!$('#aictx').value)$('#aictx').value=c}catch(e){}
+  try{const k=localStorage.getItem(LSP+'aikind'),c=localStorage.getItem(LSP+'aictx'),q=localStorage.getItem(LSP+'aipair');if(q!=null){$('#aipair').value=q;if($('#aipair').selectedIndex<0)$('#aipair').selectedIndex=0}if(k==='bat'||k==='pitch')$('#aikind').value=k;if(c!=null&&!$('#aictx').value)$('#aictx').value=c}catch(e){}
   aiEdited=false;$('#aitext').value=aiPrompt();
 }
-function aiRefresh(){try{localStorage.setItem('fn_aikind',$('#aikind').value);localStorage.setItem('fn_aictx',$('#aictx').value);localStorage.setItem('fn_aipair',$('#aipair').value)}catch(e){}if(!aiEdited)$('#aitext').value=aiPrompt()}
+function aiRefresh(){try{localStorage.setItem(LSP+'aikind',$('#aikind').value);localStorage.setItem(LSP+'aictx',$('#aictx').value);localStorage.setItem(LSP+'aipair',$('#aipair').value)}catch(e){}if(!aiEdited)$('#aitext').value=aiPrompt()}
 $('#aikind').onchange=$('#aipair').onchange=$('#aictx').oninput=aiRefresh;
 $('#aitext').oninput=()=>{aiEdited=true};
 async function copyText(t){
@@ -779,6 +779,7 @@ fixPlayW();addEventListener('resize',fixPlayW);if(document.fonts&&document.fonts
 
 /* はじめての方へ: AI相談までの流れを、画面を指しながら案内する */
 /* 開発支援(Buy Me a Coffee)のURL。空のままなら、ボタンは表示されません */
+const LSP=document.documentElement.lang==='ja'?'fn_':'fn_'+document.documentElement.lang+'_';
 const SUPPORT_URL='https://buymeacoffee.com/formnote';
 if(SUPPORT_URL){$('#supportlink').href=SUPPORT_URL;document.querySelector('.g-sup').hidden=false}
 const TUTS={basic:[
@@ -807,7 +808,7 @@ function tutRect(sel){
   const l=Math.min(...R.map(r=>r.left)),t=Math.min(...R.map(r=>r.top)),rt=Math.max(...R.map(r=>r.right)),b=Math.max(...R.map(r=>r.bottom));
   return{left:l,top:t,width:rt-l,height:b-t};
 }
-const tutLS=v=>{try{localStorage.setItem('fn_tut','1')}catch(e){}};
+const tutLS=v=>{try{localStorage.setItem(LSP+'tut','1')}catch(e){}};
 function tutPlace(){
   if(tutI<0)return;const st=TUT[tutI];const mk=$('#tutmask'),cd=$('#tutcard');
   const q=tutRect(st.sel());
@@ -852,7 +853,7 @@ $('#tutbtn2').onclick=()=>tutStart('cmp');
 $('#tutgo').onclick=()=>tutStart('cmp');
 $('#tutno').onclick=()=>{tutLS();$('#tutbn').hidden=true};
 addEventListener('resize',tutPlace);
-try{if(!localStorage.getItem('fn_tut'))$('#tutbn').hidden=false}catch(e){$('#tutbn').hidden=false}
+try{if(!localStorage.getItem(LSP+'tut'))$('#tutbn').hidden=false}catch(e){$('#tutbn').hidden=false}
 </script>
 </body>
 </html>
