@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FormNoteの使い方</title>
 <style>
-:root{--bg:#eef2ee;--panel:#fff;--line:#c9d4cc;--ink:#14201c;--mute:#4f6158;--acc:#0f6b4a;--accInk:#fff;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a16;--panel:#18251f;--line:#2b3d35;--ink:#e6efe9;--mute:#9db0a5;--acc:#ffd23f;--accInk:#14201c;color-scheme:dark}}
+:root{--bg:#f6f5f0;--panel:#fff;--line:#c9d4cc;--ink:#14201c;--mute:#4f6158;--acc:#2f7d4f;--accInk:#fff;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a16;--panel:#18251f;--line:#2b3d35;--ink:#e6efe9;--mute:#9db0a5;--acc:#58b87e;--accInk:#14201c;color-scheme:dark}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.7 system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif}
 main{word-break:auto-phrase;line-break:strict;text-wrap:pretty}
@@ -105,9 +105,9 @@ footer{margin-top:2.4rem;color:var(--mute);font-size:.92rem}
 </ul>
 
 
-<h2>開発を支援する</h2>
+<h2>DugoutToolsを応援する</h2>
 <p>FormNoteは、無料で使えるツールです。役に立ったと感じたら、コーヒー1杯分の支援をいただけると、開発の励みになります（任意です。支援しなくても、すべての機能をお使いいただけます）。</p>
-<a class="btn" href="https://buymeacoffee.com/formnote" target="_blank" rel="noopener">☕ 開発を支援する</a>
+<a class="btn" href="https://buymeacoffee.com/formnote" target="_blank" rel="noopener">☕ DugoutToolsを応援する</a>
 
 <h2>よくある質問</h2>
 <details><summary>動画はどこかにアップロードされますか？</summary><p>いいえ。動画はブラウザの中で、お使いの端末の上だけで処理されます。サーバーには送られません。</p></details><details><summary>保存した画像から、アプリを開けますか？</summary><p>はい。同じスマホで保存した画像を開き、QRコードを長押しするか、Googleフォトやレンズで検出されたリンクをタップしてください。別のスマホのカメラで読み取ることもできます。QRコードの横に書かれたリンクは、画像の一部なので、タップしても開きません。QRコードは、保存した画像でも、スクリーンショットでも使えます。ただし、画像を小さく縮小しすぎると、読み取れなくなります。<b>共有する</b>で送った場合は、リンクも文章として一緒に送られ、タップで開けるチャットアプリもあります。</p></details><details><summary>「共有する」ボタンが出ません。</summary><p>画像の共有に対応しているブラウザでだけ表示されます。出ないときは、画像を長押しして保存するか、スクリーンショットを撮って、その画像を送ってください。</p></details><details><summary>はじめてで、使い方がわかりません</summary><p>アプリの画面の下の「はじめての方へ」に、2つのガイドがあります。「1本の動画でAI相談」は、動画を選ぶところから、AIアプリに送るところまで。「2画面で比べてAI相談」は、2つの動画を並べ、基準をそろえてから、AIアプリに送るところまで。どちらも画面を指しながら案内します。初めて開いたときにも、案内のお知らせが出ます。</p></details><details><summary>保存した画像には何が入りますか？</summary><p><b>保存・共有</b>の画像は、見ていた画面のコマに、書き込みと角度が重なった画像です。<b>AIに相談</b>の画像には、書き込みは入りません。画像の下の帯には、アプリの名前、リンク、QRコードが入ります。</p></details><details><summary>動画の読み込みに時間がかかります。</summary><p>長い4K動画など、大きなファイルは開くのに時間がかかることがあります。1080pで撮影するか、必要な部分だけに切り取ると軽くなります。</p></details><details><summary>動画が再生できません。</summary><p>スマホの動画は、端末によって再生できない形式があります。特に、iPhoneのHEVC（H.265）形式の動画が当てはまります。iPhoneでは、<b>設定 → カメラ → フォーマット → 互換性優先</b>にしてから撮影し直すか、H.264のMP4に変換してから、もう一度選んでください。</p></details><details><summary>書き込みは、動画のコマに付いてきますか？</summary><p>いいえ。書き込みは、コマではなく画面の位置に固定されます。コマ送りをしても同じ場所に残るので、固定した線に対して体の動きを比べられます。書き込みは画面ごとに別々に保存され、別の動画を選ぶと消えます。</p></details><details><summary><span class="nb">1コマ</span>ずつ進みません。</summary><p>fpsの設定を確認してください。撮影したコマ数に合わせます。動画の実際のコマ数より大きい値にすると、1回で<span class="nb">1コマ</span>より少ししか進みません。</p></details><details><summary>動画を選ぶとき、いつも同じフォルダに戻ってしまいます。</summary><p>ファイルを選ぶ画面は、アプリではなくスマホが決めています。選ぶ画面の<b>最近</b>や<b>動画</b>の分類を使うと、フォルダをたどらずに動画を探せます。</p></details><details><summary>書き込みは残りますか？</summary><p>ページを開いている間は残ります。ページを読み込み直したり、別の動画を選んだりすると消えます。残したいときは<b>画像を保存</b>を使ってください。</p></details>
