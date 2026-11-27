@@ -122,10 +122,15 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
 .ver{margin:4px 2px 12px;font-size:12px;color:var(--mute)}
 .family{margin:14px 2px 6px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)}.family h2{margin:0 0 4px;font-size:14px;color:var(--ink)}.family p{margin:0 0 6px;line-height:1.6}.family ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}.family li{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;padding:4px 0}.family li a,.family li b{color:var(--ink);min-width:6.5em}.family li a{color:var(--acc);font-weight:700}
 .g-sup{text-align:center}.g-sup[hidden]{display:none}.g-sup .lnk{display:inline-block;min-height:44px}
+html,body{height:auto;min-height:100%}
+body{display:block;padding:6px}
+#app{display:flex;flex-direction:column;gap:6px;height:calc(100vh - 12px);height:calc(100dvh - 12px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+#foot{max-width:640px;margin:0 auto;padding-bottom:10px}
 @media (orientation:landscape) and (max-height:560px){.g-sup,.brand,.family,.ver{display:none}}
 </style>
 </head>
 <body>
+<div id="app">
 <div class="brand"><b>FormNote</b><span>· DugoutTools</span></div>
 <div id="tutbn" hidden><span><span class="nb">はじめての方へ：</span><span class="nb">動画を比べてAIに相談するまでを</span><span class="nb">案内します</span></span><button class="go" id="tutgo">見てみる</button><button id="tutno" aria-label="閉じる">×</button></div>
 <div class="panes" id="panes"></div>
@@ -174,6 +179,9 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
       <span class="hintline" id="toolhint">2点をドラッグして線を引く</span>
     </div>
   </details>
+</div>
+</div>
+<div id="foot">
   <div class="g-sup" hidden><a class="lnk" id="supportlink" href="#" target="_blank" rel="noopener">☕ DugoutToolsを応援する</a></div>
   <section class="family" id="series"><h2>DugoutToolsのアプリ</h2><p>少年野球の現場で使える、無料・登録なしの道具。記録や写真を、こちらのサーバーに送ることはありません。外に出るのは、自分で共有したり、AIアプリに渡したりしたときだけです。</p><ul><li><a href="https://yatti3g-byte.github.io/TapScore/" target="_blank" rel="noopener">TapScore</a><span>1球ずつタップして記録するスコアブック</span></li><li><a href="https://yatti3g-byte.github.io/PitchCount/" target="_blank" rel="noopener">PitchCount</a><span>球数制限に合わせた球数カウンター</span></li><li><b>FormNote</b><span>コマ送りと角度の測定で、フォームを確認（このアプリ）</span></li><li><a href="https://yatti3g-byte.github.io/ShotFind/" target="_blank" rel="noopener">ShotFind</a><span>チームの試合写真から、わが子の写真を探す</span></li></ul></section>
   <p class="ver" id="ver">FormNote 0.1（試作版）</p>
