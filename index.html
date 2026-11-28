@@ -2,14 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta name="google-site-verification" content="ITxa_inRuPYXshXMjW5c9h8XO8YNBbA4dsuDdqyTWBI" />
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FormNote</title>
-<meta name="description" content="コマ送り、角度の測定、2画面での比較ができる無料の野球フォームチェックツール。動画は端末の中だけで処理されます。">
+<title>FormNote｜野球フォームを2画面で比べてAI相談【無料・登録不要】</title>
+<meta name="description" content="少年野球・中学野球の親子向け。スイングや投球の動画を2つ並べて、コマ送りと角度の測定でフォームを比較できます。比べた画像でAIに相談もできる、無料・登録不要・インストール不要のツール。動画は端末の外に送られません。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="FormNote">
-<meta property="og:description" content="コマ送り、角度の測定、2画面での比較ができる無料の野球フォームチェックツール。動画は端末の中だけで処理されます。">
+<meta property="og:title" content="FormNote｜野球フォームを2画面で比べてAI相談【無料・登録不要】">
+<meta property="og:description" content="少年野球・中学野球の親子向け。スイングや投球の動画を2つ並べて、コマ送りと角度の測定でフォームを比較できます。比べた画像でAIに相談もできる、無料・登録不要・インストール不要のツール。動画は端末の外に送られません。">
 <meta property="og:url" content="https://yatti3g-byte.github.io/form-note/">
 <meta property="og:image" content="https://yatti3g-byte.github.io/form-note/og.jpg">
 <meta property="og:image:width" content="1200">
@@ -120,13 +121,14 @@ details.draw:not([open]) .g-tools,details.draw:not([open]) .g-edit{display:none}
 #tutbn button.go{background:#fff;color:#2f7d4f;font-weight:700}
 .brand{display:flex;gap:6px;align-items:baseline;font-size:12px;line-height:1.2;color:var(--mute);padding:0 2px}.brand b{color:var(--ink);font-size:13px}
 .ver{margin:4px 2px 12px;font-size:12px;color:var(--mute)}
+.about{margin:14px 2px 6px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)}.about h2{margin:0 0 4px;font-size:14px;color:var(--ink)}.about h3{margin:10px 0 2px;font-size:13px;color:var(--ink)}.about p{margin:0;line-height:1.7}.about a{color:var(--acc)}
 .family{margin:14px 2px 6px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)}.family h2{margin:0 0 4px;font-size:14px;color:var(--ink)}.family p{margin:0 0 6px;line-height:1.6}.family ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}.family li{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;padding:4px 0}.family li a,.family li b{color:var(--ink);min-width:6.5em}.family li a{color:var(--acc);font-weight:700}
 .g-sup{text-align:center}.g-sup[hidden]{display:none}.g-sup .lnk{display:inline-block;min-height:44px}
 html,body{height:auto;min-height:100%}
 body{display:block;padding:6px}
 #app{display:flex;flex-direction:column;gap:6px;height:calc(100vh - 12px);height:calc(100dvh - 12px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 #foot{max-width:640px;margin:0 auto;padding-bottom:10px}
-@media (orientation:landscape) and (max-height:560px){.g-sup,.brand,.family,.ver{display:none}}
+@media (orientation:landscape) and (max-height:560px){.g-sup,.brand,.family,.ver,.about{display:none}}
 </style>
 </head>
 <body>
@@ -182,9 +184,10 @@ body{display:block;padding:6px}
 </div>
 </div>
 <div id="foot">
-  <div class="g-sup" hidden><a class="lnk" id="supportlink" href="#" target="_blank" rel="noopener">☕ DugoutToolsを応援する</a></div>
+  <section class="about" id="about"><h2>FormNoteについて</h2><h3>こんな場面で</h3><p>少年野球・中学野球の練習や試合の合間に、スマホで撮ったスイングや投球の動画をその場で見返せます。ベンチでも自宅でも、「前より良くなったか」「お手本の選手とどこが違うか」を、同じ瞬間にそろえた2つの動画で確かめられます。たとえば、練習試合のスイングと先週のスイングを並べる、投球フォームをお手本の動画と見比べる、といった使い方がおすすめです。保護者のかたが、わが子のフォームを記録して成長を振り返る用途にも向いています。</p><h3>できること</h3><p>コマ送り、角度の測定、2画面の比較。比べた画像と質問文を、ChatGPTやClaudeなどのAIアプリに渡して、フォームの相談もできます。くわしい手順は<a href="help.html" target="_blank" rel="noopener">使い方</a>をご覧ください。</p><h3>よくある質問</h3><p><b>無料ですか？</b>　無料で、登録もインストールも要りません。<br><b>動画は送られますか？</b>　動画は端末の中だけで処理し、外には送りません。<br><b>どんな動画が使えますか？</b>　スマホで撮った横向き・縦向きの動画です。撮影したfpsは、設定で合わせます。</p></section>
   <section class="family" id="series"><h2>DugoutToolsのアプリ</h2><p>少年野球の現場で使える、無料・登録なしの道具。記録や写真を、こちらのサーバーに送ることはありません。外に出るのは、自分で共有したり、AIアプリに渡したりしたときだけです。</p><ul><li><a href="https://yatti3g-byte.github.io/TapScore/" target="_blank" rel="noopener">TapScore</a><span>1球ずつタップして記録するスコアブック</span></li><li><a href="https://yatti3g-byte.github.io/PitchCount/" target="_blank" rel="noopener">PitchCount</a><span>球数制限に合わせた球数カウンター</span></li><li><b>FormNote</b><span>コマ送りと角度の測定で、フォームを確認（このアプリ）</span></li><li><a href="https://yatti3g-byte.github.io/ShotFind/" target="_blank" rel="noopener">ShotFind</a><span>チームの試合写真から、わが子の写真を探す</span></li></ul></section>
   <p class="ver" id="ver">FormNote 0.1（試作版）</p>
+  <div class="g-sup" hidden><a class="lnk" id="supportlink" href="#" target="_blank" rel="noopener">☕ DugoutToolsを応援する</a></div>
 </div>
 
 <div id="tutmask" hidden></div><div id="tutcard" hidden role="dialog" aria-live="polite"></div>
